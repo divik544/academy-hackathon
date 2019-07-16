@@ -2,21 +2,19 @@ import os
 
 from flask import Flask
 from flask import request
-
+from flaskext.mysql import MySQL
 from flask import render_template
 
-# our fake db
-todo_store = {}
-todo_store['depo'] = ['Go for run', 'Listen Rock Music']
-todo_store['shivang'] = ['Read book', 'Play Fifa', 'Drink Coffee']
-todo_store['raj'] = ['Study', 'Brush']
-todo_store['sanket'] = ['Sleep', 'Code']
-todo_store['aagam'] = ['play cricket', 'have tea']
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-
+    mysql = MySQL()
+    app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+    app.config['MYSQL_DATABASE_USER'] = 'administrator'
+    app.config['MYSQL_DATABASE_PASSWORD'] = 'Divik@123'
+    app.config['MYSQL_DATABASE_DB'] = 'divik'
+    mysql.init_app(app)
     # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
@@ -24,14 +22,21 @@ def create_app(test_config=None):
         pass
 
     def select_todos(name):
-        global todo_store
-        return todo_store[name]
+        conn = mysql.connect()
+        cur = conn.cursor()
+        cur.execute("SELECT todo FROM todos WHERE user = %s",(name))
+        data = cur.fetchall()
+        print(data)
+        retdata = [tmp[0] for tmp in data]
+        if len(retdata) == 0:
+            return None
+        return retdata
 
     def insert_todo(name, todo):
-        global todo_store
-        current_todos = todo_store[name]
-        current_todos.append(todo)
-        todo_store[name] = current_todos
+        conn = mysql.connect()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO todos(user,todo) VALUES(%s,%s)",(name,todo))
+        conn.commit()
         return
 
     def add_todo_by_name(name, todo):
