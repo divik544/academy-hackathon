@@ -4,6 +4,7 @@ from flask import Flask
 from flask import request
 from flaskext.mysql import MySQL
 from flask import render_template
+from flask import redirect, url_for
 
 
 def create_app(test_config=None):
@@ -66,12 +67,12 @@ def create_app(test_config=None):
             return render_template('todo_view.html',todos=person_todo_list)
 
 
-    @app.route('/add_todos')
+    @app.route('/add_todos',methods=['POST'])
     def add_todos():
-        name = request.args.get('name')
-        todo = request.args.get('todo')
+        name = request.form.get('user_name')
+        todo = request.form.get('todo')
         add_todo_by_name(name, todo)
-        return 'Added Successfully'
+        return redirect(url_for('todos',name=name))
 
     return app
 
